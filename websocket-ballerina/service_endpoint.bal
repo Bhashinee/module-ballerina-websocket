@@ -16,7 +16,6 @@
 
 import ballerina/jballerina.java;
 //import ballerina/cache;
-import ballerina/crypto;
 //import ballerina/io;
 //import ballerina/lang.'object as lang;
 //import ballerina/runtime;
