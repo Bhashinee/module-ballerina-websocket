@@ -18,12 +18,17 @@
 
 package org.ballerinalang.net.websocket.client.listener;
 
+import io.ballerina.runtime.api.async.Callback;
 import io.ballerina.runtime.api.creators.ValueCreator;
+import io.ballerina.runtime.api.types.MethodType;
+import io.ballerina.runtime.api.types.Type;
 import io.ballerina.runtime.api.utils.StringUtils;
+import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BObject;
 import org.ballerinalang.net.http.HttpUtil;
 import org.ballerinalang.net.transport.contract.websocket.WebSocketConnection;
 import org.ballerinalang.net.transport.message.HttpCarbonResponse;
+import org.ballerinalang.net.websocket.ModuleUtils;
 import org.ballerinalang.net.websocket.WebSocketConstants;
 import org.ballerinalang.net.websocket.WebSocketService;
 import org.ballerinalang.net.websocket.WebSocketUtil;
@@ -35,6 +40,8 @@ import org.ballerinalang.net.websocket.server.WebSocketConnectionInfo;
 import java.util.concurrent.CountDownLatch;
 
 import static org.ballerinalang.net.http.HttpConstants.CLIENT_ENDPOINT_CONFIG;
+import static org.ballerinalang.net.websocket.WebSocketConstants.CLIENT_CONNECTION_ERROR;
+import static org.ballerinalang.net.websocket.WebSocketConstants.RESOURCE_NAME_ON_OPEN;
 
 /**
  * The `WebSocketHandshakeListener` implements the `{@link ExtendedHandshakeListener}` interface directly.
@@ -51,8 +58,8 @@ public class WebSocketHandshakeListener implements ExtendedHandshakeListener {
     private boolean readyOnConnect;
 
     public WebSocketHandshakeListener(BObject webSocketClient, WebSocketService wsService,
-                                      ExtendedConnectorListener connectorListener,
-                                      CountDownLatch countDownLatch, boolean readyOnConnect) {
+            ExtendedConnectorListener connectorListener,
+            CountDownLatch countDownLatch, boolean readyOnConnect) {
         this.webSocketClient = webSocketClient;
         this.wsService = wsService;
         this.connectorListener = connectorListener;
@@ -67,7 +74,7 @@ public class WebSocketHandshakeListener implements ExtendedHandshakeListener {
         if (isFirstConnectionEstablished(webSocketClient)) {
             webSocketConnector = (BObject) webSocketClient.get(WebSocketConstants.CLIENT_CONNECTOR_FIELD);
             webSocketClient.set(WebSocketConstants.LISTENER_ID_FIELD,
-                                StringUtils.fromString(webSocketConnection.getChannelId()));
+                    StringUtils.fromString(webSocketConnection.getChannelId()));
         } else {
             webSocketConnector = createWebSocketConnector(readyOnConnect);
             WebSocketUtil.populateWebSocketEndpoint(webSocketConnection, webSocketClient);
@@ -79,8 +86,35 @@ public class WebSocketHandshakeListener implements ExtendedHandshakeListener {
         }
         setWebSocketOpenConnectionInfo(webSocketConnection, webSocketConnector, webSocketClient, wsService);
         connectorListener.setConnectionInfo(connectionInfo);
+        dispatchClientOnOpen(webSocketConnection, connectionInfo, wsService);
         countDownLatch.countDown();
         WebSocketObservabilityUtil.observeConnection(connectionInfo);
+    }
+
+    private static void dispatchClientOnOpen(WebSocketConnection webSocketConnection,
+            WebSocketConnectionInfo connectionInfo, WebSocketService wsService) {
+        BObject dispatchingService = wsService.getBalService();
+        MethodType onOpenResource = wsService.getResourceByName(RESOURCE_NAME_ON_OPEN);
+        if (onOpenResource != null) {
+            Type[] parameterTypes = onOpenResource.getParameterTypes();
+            Object[] bValues = new Object[parameterTypes.length * 2];
+            bValues[0] = connectionInfo.getWebSocketEndpoint();
+            bValues[1] = true;
+            Callback onOpenCallback = new Callback() {
+                @Override
+                public void notifySuccess(Object result) {
+                }
+
+                @Override
+                public void notifyFailure(BError error) {
+                    error.getPrintableStackTrace();
+                    WebSocketUtil.closeDuringUnexpectedCondition(webSocketConnection);
+                }
+            };
+            wsService.getRuntime()
+                    .invokeMethodAsync(dispatchingService, RESOURCE_NAME_ON_OPEN, null, ModuleUtils.getOnOpenMetaData(),
+                            onOpenCallback, bValues);
+        }
     }
 
     @Override
@@ -88,7 +122,8 @@ public class WebSocketHandshakeListener implements ExtendedHandshakeListener {
         if (response != null) {
             webSocketClient.set(WebSocketConstants.CLIENT_RESPONSE_FIELD, HttpUtil.createResponseStruct(response));
         }
-        BObject webSocketConnector = ValueCreator.createObjectValue(WebSocketConstants.PROTOCOL_WEBSOCKET_PKG_ID,
+        webSocketClient.addNativeData(CLIENT_CONNECTION_ERROR, t);
+        BObject webSocketConnector = ValueCreator.createObjectValue(ModuleUtils.getWebsocketModule(),
                 WebSocketConstants.WEBSOCKET_CONNECTOR);
         setWebSocketOpenConnectionInfo(null, webSocketConnector, webSocketClient, wsService);
         webSocketConnector.addNativeData(WebSocketConstants.NATIVE_DATA_WEBSOCKET_CONNECTION_INFO, connectionInfo);
@@ -107,15 +142,17 @@ public class WebSocketHandshakeListener implements ExtendedHandshakeListener {
     }
 
     private void setWebSocketOpenConnectionInfo(WebSocketConnection webSocketConnection,
-                                                BObject webSocketConnector,
-                                                BObject webSocketClient, WebSocketService wsService) {
+            BObject webSocketConnector,
+            BObject webSocketClient, WebSocketService wsService) {
         this.connectionInfo = new WebSocketConnectionInfo(wsService, webSocketConnection, webSocketClient);
         webSocketConnector.addNativeData(WebSocketConstants.NATIVE_DATA_WEBSOCKET_CONNECTION_INFO, connectionInfo);
+        webSocketConnector.addNativeData(WebSocketConstants.CLIENT_LISTENER,
+                webSocketClient.getNativeData(WebSocketConstants.CLIENT_LISTENER));
         webSocketClient.set(WebSocketConstants.CLIENT_CONNECTOR_FIELD, webSocketConnector);
     }
 
     private static BObject createWebSocketConnector(boolean readyOnConnect) {
-        BObject webSocketConnector = ValueCreator.createObjectValue(WebSocketConstants.PROTOCOL_WEBSOCKET_PKG_ID,
+        BObject webSocketConnector = ValueCreator.createObjectValue(ModuleUtils.getWebsocketModule(),
                 WebSocketConstants.WEBSOCKET_CONNECTOR);
         // Sets the value of `readyOnConnect` to the created `isReady' field of the webSocketConnector.
         // It checks whether the `readNextFrame` function is already called or not when the `ready()` function

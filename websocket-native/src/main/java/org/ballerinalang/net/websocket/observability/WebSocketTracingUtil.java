@@ -34,7 +34,6 @@ public class WebSocketTracingUtil {
     /**
      * Obtains the current observer context of new resource that was invoked and sets the necessary tags to it.
      *
-     * @param strand         Strand of the new resource invoked
      * @param connectionInfo information regarding connection.
      */
     static void traceResourceInvocation(Environment environment, WebSocketConnectionInfo connectionInfo) {

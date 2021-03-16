@@ -45,7 +45,7 @@ public class RetryHandshakeListener implements ExtendedHandshakeListener {
     private static final Logger logger = LoggerFactory.getLogger(RetryHandshakeListener.class);
 
     public RetryHandshakeListener(ExtendedHandshakeListener handshakeListener,
-                                  RetryContext retryContext, WebSocketService wsService) {
+            RetryContext retryContext, WebSocketService wsService) {
         this.handshakeListener = handshakeListener;
         this.retryContext = retryContext;
         this.wsService = wsService;
@@ -68,7 +68,7 @@ public class RetryHandshakeListener implements ExtendedHandshakeListener {
         if (throwable instanceof IOException && WebSocketUtil.reconnect(getWebSocketClient(), wsService)) {
             return;
         }
-        WebSocketResourceDispatcher.dispatchOnError(getWebSocketConnectionInfo(), throwable);
+        WebSocketResourceDispatcher.dispatchOnError(getWebSocketConnectionInfo(), throwable, false);
     }
 
     @Override

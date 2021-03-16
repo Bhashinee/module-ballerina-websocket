@@ -36,7 +36,7 @@ public class Ready {
 
     public static Object ready(Environment env, BObject wsConnector) {
         WebSocketConnectionInfo connectionInfo = (WebSocketConnectionInfo) wsConnector
-                    .getNativeData(WebSocketConstants.NATIVE_DATA_WEBSOCKET_CONNECTION_INFO);
+                .getNativeData(WebSocketConstants.NATIVE_DATA_WEBSOCKET_CONNECTION_INFO);
         WebSocketObservabilityUtil.observeResourceInvocation(env, connectionInfo,
                 WebSocketConstants.RESOURCE_NAME_READY);
         try {
@@ -47,12 +47,12 @@ public class Ready {
                         put(WebSocketConstants.CLIENT_READY_ON_CONNECT, true);
             } else {
                 return WebSocketUtil.getWebSocketError("Already started reading frames", null,
-                        WebSocketConstants.ErrorCode.WsGenericError.errorCode(), null);
+                        WebSocketConstants.ErrorCode.Error.errorCode(), null);
             }
         } catch (Exception e) {
             log.error("Error occurred when calling ready", e);
             WebSocketObservabilityUtil.observeError(connectionInfo, WebSocketObservabilityConstants.ERROR_TYPE_READY,
-                                                    e.getMessage());
+                    e.getMessage());
             return WebSocketUtil.createErrorByType(e);
         }
         return null;

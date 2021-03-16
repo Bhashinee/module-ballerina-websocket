@@ -42,7 +42,7 @@ class WebSocketMetricsUtil {
             return;
         }
         incrementCounterMetric(observerContext, WebSocketObservabilityConstants.METRIC_REQUESTS[0],
-                               WebSocketObservabilityConstants.METRIC_REQUESTS[1]);
+                WebSocketObservabilityConstants.METRIC_REQUESTS[1]);
     }
 
     static void reportConnectionMetrics(WebSocketObserverContext observerContext) {
@@ -50,7 +50,7 @@ class WebSocketMetricsUtil {
             return;
         }
         incrementGaugeMetric(observerContext, WebSocketObservabilityConstants.METRIC_CONNECTIONS[0],
-                               WebSocketObservabilityConstants.METRIC_CONNECTIONS[1]);
+                WebSocketObservabilityConstants.METRIC_CONNECTIONS[1]);
     }
 
     static void reportSendMetrics(WebSocketObserverContext observerContext, String type) {
@@ -61,7 +61,7 @@ class WebSocketMetricsUtil {
         observerContext.addTag(WebSocketObservabilityConstants.TAG_MESSAGE_TYPE, type);
         //Increment message sent metric
         incrementCounterMetric(observerContext, WebSocketObservabilityConstants.METRIC_MESSAGES_SENT[0],
-                               WebSocketObservabilityConstants.METRIC_MESSAGES_SENT[1]);
+                WebSocketObservabilityConstants.METRIC_MESSAGES_SENT[1]);
     }
 
     static void reportReceivedMetrics(WebSocketObserverContext observerContext, String type) {
@@ -69,10 +69,10 @@ class WebSocketMetricsUtil {
             return;
         }
         //Define type of message (text, binary, control, close)
-        observerContext.addMainTag(WebSocketObservabilityConstants.TAG_MESSAGE_TYPE, type);
+        observerContext.addTag(WebSocketObservabilityConstants.TAG_MESSAGE_TYPE, type);
         //Increment messages received metric
         incrementCounterMetric(observerContext, WebSocketObservabilityConstants.METRIC_MESSAGES_RECEIVED[0],
-                               WebSocketObservabilityConstants.METRIC_MESSAGES_RECEIVED[1]);
+                WebSocketObservabilityConstants.METRIC_MESSAGES_RECEIVED[1]);
     }
 
     static void reportCloseMetrics(WebSocketObserverContext observerContext) {
@@ -80,16 +80,16 @@ class WebSocketMetricsUtil {
             return;
         }
         decrementGaugeMetric(observerContext, WebSocketObservabilityConstants.METRIC_CONNECTIONS[0],
-                             WebSocketObservabilityConstants.METRIC_CONNECTIONS[1]);
+                WebSocketObservabilityConstants.METRIC_CONNECTIONS[1]);
     }
 
     static void reportResourceInvocationMetrics(WebSocketObserverContext observerContext, String resource) {
         if (!ObserveUtils.isMetricsEnabled()) {
             return;
         }
-        observerContext.addMainTag(WebSocketObservabilityConstants.TAG_RESOURCE, resource);
+        observerContext.addTag(WebSocketObservabilityConstants.TAG_RESOURCE, resource);
         incrementCounterMetric(observerContext, WebSocketObservabilityConstants.METRIC_RESOURCES_INVOKED[0],
-                               WebSocketObservabilityConstants.METRIC_RESOURCES_INVOKED[1]);
+                WebSocketObservabilityConstants.METRIC_RESOURCES_INVOKED[1]);
     }
 
     static void reportErrorMetrics(WebSocketObserverContext observerContext, String errorType, String messageType) {
@@ -103,7 +103,7 @@ class WebSocketMetricsUtil {
         }
         //Increment errors metric
         incrementCounterMetric(observerContext, WebSocketObservabilityConstants.METRIC_ERRORS[0],
-                               WebSocketObservabilityConstants.METRIC_ERRORS[1]);
+                WebSocketObservabilityConstants.METRIC_ERRORS[1]);
     }
 
     static void reportErrorMetrics(String errorType, String url, String clientOrServer) {
@@ -116,25 +116,25 @@ class WebSocketMetricsUtil {
         observerContext.addTag(WebSocketObservabilityConstants.TAG_CONTEXT, clientOrServer);
         //Increment errors metric
         incrementCounterMetric(observerContext, WebSocketObservabilityConstants.METRIC_ERRORS[0],
-                               WebSocketObservabilityConstants.METRIC_ERRORS[1]);
+                WebSocketObservabilityConstants.METRIC_ERRORS[1]);
     }
 
     private static void incrementCounterMetric(WebSocketObserverContext observerContext, String name, String desc) {
         Set<Tag> tags = observerContext.getAllTags();
         metricRegistry.counter(new MetricId(ObservabilityConstants.SERVER_CONNECTOR_WEBSOCKET + "_" +
-                                                    name, desc, tags)).increment();
+                name, desc, tags)).increment();
     }
 
     private static void incrementGaugeMetric(WebSocketObserverContext observerContext, String name, String desc) {
         Set<Tag> tags = observerContext.getAllTags();
         metricRegistry.gauge(new MetricId(ObservabilityConstants.SERVER_CONNECTOR_WEBSOCKET + "_" +
-                                                  name, desc, tags)).increment();
+                name, desc, tags)).increment();
     }
 
     private static void decrementGaugeMetric(WebSocketObserverContext observerContext, String name, String desc) {
         Set<Tag> tags = observerContext.getAllTags();
         metricRegistry.gauge(new MetricId(ObservabilityConstants.SERVER_CONNECTOR_WEBSOCKET + "_" +
-                                                  name, desc, tags)).decrement();
+                name, desc, tags)).decrement();
     }
 
     private WebSocketMetricsUtil() {

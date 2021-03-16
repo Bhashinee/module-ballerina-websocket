@@ -69,8 +69,8 @@ public class FailoverInitEndpoint {
      * @param targetUrls - target URLs
      */
     private static void populateFailoverContext(BMap<BString, Object> failoverConfig,
-                                                FailoverContext failoverClientConnectorConfig,
-                                                List<String> targetUrls) {
+            FailoverContext failoverClientConnectorConfig,
+            List<String> targetUrls) {
         failoverClientConnectorConfig.setFailoverInterval(WebSocketUtil.getIntValue(failoverConfig, FAILOVER_INTERVAL,
                 1000));
         failoverClientConnectorConfig.setTargetUrls(targetUrls);
@@ -106,7 +106,7 @@ public class FailoverInitEndpoint {
         }
         if (newTargetUrls.isEmpty()) {
             throw WebSocketUtil.getWebSocketError("TargetUrls should have at least one valid URL.",
-                    null, WebSocketConstants.ErrorCode.WsGenericError.errorCode(), null);
+                    null, WebSocketConstants.ErrorCode.Error.errorCode(), null);
         }
         if (logger.isDebugEnabled()) {
             logger.debug("New targetUrls: {}", newTargetUrls);

@@ -20,10 +20,8 @@ package org.ballerinalang.net.websocket.server;
 
 import io.ballerina.runtime.api.values.BMap;
 import org.ballerinalang.net.http.HttpConstants;
-import org.ballerinalang.net.http.HttpResource;
 import org.ballerinalang.net.http.HttpResourceArguments;
 import org.ballerinalang.net.http.HttpUtil;
-import org.ballerinalang.net.transport.contract.websocket.ServerHandshakeFuture;
 import org.ballerinalang.net.transport.contract.websocket.WebSocketBinaryMessage;
 import org.ballerinalang.net.transport.contract.websocket.WebSocketCloseMessage;
 import org.ballerinalang.net.transport.contract.websocket.WebSocketConnection;
@@ -33,12 +31,18 @@ import org.ballerinalang.net.transport.contract.websocket.WebSocketHandshaker;
 import org.ballerinalang.net.transport.contract.websocket.WebSocketMessage;
 import org.ballerinalang.net.transport.contract.websocket.WebSocketTextMessage;
 import org.ballerinalang.net.transport.message.HttpCarbonMessage;
+import org.ballerinalang.net.uri.URIUtil;
 import org.ballerinalang.net.websocket.WebSocketResourceDispatcher;
 import org.ballerinalang.net.websocket.WebSocketUtil;
 import org.ballerinalang.net.websocket.observability.WebSocketObservabilityConstants;
 import org.ballerinalang.net.websocket.observability.WebSocketObservabilityUtil;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.ballerinalang.net.http.HttpDispatcher.getValidatedURI;
+import static org.ballerinalang.net.websocket.WebSocketConstants.BACK_SLASH;
 
 /**
  * Ballerina Connector listener for WebSocket.
@@ -61,28 +65,26 @@ public class WebSocketServerListener implements WebSocketConnectorListener {
     public void onHandshake(WebSocketHandshaker webSocketHandshaker) {
         HttpResourceArguments pathParams = new HttpResourceArguments();
         URI requestUri = createRequestUri(webSocketHandshaker);
-        WebSocketServerService wsService = servicesRegistry.findMatching(requestUri.getPath(), pathParams,
-                                                                         webSocketHandshaker);
+        Map<String, Map<String, String>> matrixParams = new HashMap<>();
+        String uriWithoutMatrixParams = URIUtil.extractMatrixParams(requestUri.getRawPath(), matrixParams);
+        URI validatedUri = getValidatedURI(uriWithoutMatrixParams);
+        String matchingBasePath = servicesRegistry
+                .findTheMostSpecificBasePath(validatedUri.getRawPath(), servicesRegistry.getServicesByBasePath(),
+                        servicesRegistry.getSortedServiceURIs());
+        WebSocketServerService wsService = servicesRegistry.findMatching(matchingBasePath, pathParams,
+                webSocketHandshaker);
         if (wsService == null) {
             String errMsg = "No service found to handle the service request";
             webSocketHandshaker.cancelHandshake(404, errMsg);
             WebSocketObservabilityUtil.observeError(WebSocketObservabilityConstants.ERROR_TYPE_CONNECTION,
-                                                    errMsg, requestUri.getPath(),
-                                                    WebSocketObservabilityConstants.CONTEXT_SERVER);
+                    errMsg, requestUri.getPath(),
+                    WebSocketObservabilityConstants.CONTEXT_SERVER);
             return;
         }
-        setCarbonMessageProperties(pathParams, requestUri, webSocketHandshaker.getHttpCarbonRequest());
-
-        HttpResource onUpgradeResource = wsService.getUpgradeResource();
-        if (onUpgradeResource != null) {
+        setCarbonMessageProperties(pathParams, requestUri, validatedUri, webSocketHandshaker.getHttpCarbonRequest(),
+                matchingBasePath);
             WebSocketResourceDispatcher.dispatchUpgrade(webSocketHandshaker, wsService, httpEndpointConfig,
-                                                        connectionManager);
-        } else {
-            ServerHandshakeFuture future = webSocketHandshaker.handshake(
-                    wsService.getNegotiableSubProtocols(), wsService.getIdleTimeoutInSeconds() * 1000, null,
-                    wsService.getMaxFrameSize());
-            future.setHandshakeListener(new UpgradeListener(wsService, connectionManager));
-        }
+                    connectionManager);
     }
 
     private URI createRequestUri(WebSocketHandshaker webSocketHandshaker) {
@@ -91,34 +93,41 @@ public class WebSocketServerListener implements WebSocketConnectorListener {
         return URI.create(serviceUri);
     }
 
-    private void setCarbonMessageProperties(HttpResourceArguments pathParams, URI requestUri, HttpCarbonMessage msg) {
+    private void setCarbonMessageProperties(HttpResourceArguments pathParams, URI requestUri, URI validateUri,
+            HttpCarbonMessage msg, String matchingBasePath) {
+        String subPath = URIUtil.getSubPath(validateUri.getRawPath(), matchingBasePath);
         msg.setProperty(HttpConstants.QUERY_STR, requestUri.getRawQuery());
         msg.setProperty(HttpConstants.RAW_QUERY_STR, requestUri.getRawQuery());
         msg.setProperty(HttpConstants.RESOURCE_ARGS, pathParams);
+        if (subPath.startsWith(BACK_SLASH)) {
+            msg.setProperty(HttpConstants.SUB_PATH, subPath.substring(1));
+        } else {
+            msg.setProperty(HttpConstants.SUB_PATH, subPath);
+        }
     }
 
     @Override
     public void onMessage(WebSocketTextMessage webSocketTextMessage) {
         WebSocketResourceDispatcher.dispatchOnText(
-                getConnectionInfo(webSocketTextMessage), webSocketTextMessage);
+                getConnectionInfo(webSocketTextMessage), webSocketTextMessage, true);
     }
 
     @Override
     public void onMessage(WebSocketBinaryMessage webSocketBinaryMessage) {
         WebSocketResourceDispatcher.dispatchOnBinary(
-                getConnectionInfo(webSocketBinaryMessage), webSocketBinaryMessage);
+                getConnectionInfo(webSocketBinaryMessage), webSocketBinaryMessage, true);
     }
 
     @Override
     public void onMessage(WebSocketControlMessage webSocketControlMessage) {
         WebSocketResourceDispatcher.dispatchOnPingOnPong(
-                getConnectionInfo(webSocketControlMessage), webSocketControlMessage);
+                getConnectionInfo(webSocketControlMessage), webSocketControlMessage, true);
     }
 
     @Override
     public void onMessage(WebSocketCloseMessage webSocketCloseMessage) {
         WebSocketResourceDispatcher.dispatchOnClose(
-                getConnectionInfo(webSocketCloseMessage), webSocketCloseMessage);
+                getConnectionInfo(webSocketCloseMessage), webSocketCloseMessage, true);
     }
 
     @Override
@@ -134,13 +143,12 @@ public class WebSocketServerListener implements WebSocketConnectorListener {
 
     @Override
     public void onError(WebSocketConnection webSocketConnection, Throwable throwable) {
-        WebSocketResourceDispatcher.dispatchOnError(
-                getConnectionInfo(webSocketConnection), throwable);
+        WebSocketResourceDispatcher.dispatchOnError(getConnectionInfo(webSocketConnection), throwable, true);
     }
 
     @Override
     public void onIdleTimeout(WebSocketControlMessage controlMessage) {
-        WebSocketResourceDispatcher.dispatchOnIdleTimeout(getConnectionInfo(controlMessage));
+        WebSocketResourceDispatcher.dispatchOnIdleTimeout(getConnectionInfo(controlMessage), true);
     }
 
     private String getConnectionId(WebSocketMessage webSocketMessage) {

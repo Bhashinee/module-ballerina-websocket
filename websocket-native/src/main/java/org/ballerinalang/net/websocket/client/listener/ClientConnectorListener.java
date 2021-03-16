@@ -48,32 +48,32 @@ public class ClientConnectorListener implements ExtendedConnectorListener {
 
     @Override
     public void onMessage(WebSocketTextMessage webSocketTextMessage) {
-        WebSocketResourceDispatcher.dispatchOnText(connectionInfo, webSocketTextMessage);
+        WebSocketResourceDispatcher.dispatchOnText(connectionInfo, webSocketTextMessage, false);
     }
 
     @Override
     public void onMessage(WebSocketBinaryMessage webSocketBinaryMessage) {
-        WebSocketResourceDispatcher.dispatchOnBinary(connectionInfo, webSocketBinaryMessage);
+        WebSocketResourceDispatcher.dispatchOnBinary(connectionInfo, webSocketBinaryMessage, false);
     }
 
     @Override
     public void onMessage(WebSocketControlMessage webSocketControlMessage) {
-        WebSocketResourceDispatcher.dispatchOnPingOnPong(connectionInfo, webSocketControlMessage);
+        WebSocketResourceDispatcher.dispatchOnPingOnPong(connectionInfo, webSocketControlMessage, false);
     }
 
     @Override
     public void onMessage(WebSocketCloseMessage webSocketCloseMessage) {
-        WebSocketResourceDispatcher.dispatchOnClose(connectionInfo, webSocketCloseMessage);
+        WebSocketResourceDispatcher.dispatchOnClose(connectionInfo, webSocketCloseMessage, false);
     }
 
     @Override
     public void onError(WebSocketConnection webSocketConnection, Throwable throwable) {
-        WebSocketResourceDispatcher.dispatchOnError(connectionInfo, throwable);
+        WebSocketResourceDispatcher.dispatchOnError(connectionInfo, throwable, false);
     }
 
     @Override
     public void onIdleTimeout(WebSocketControlMessage controlMessage) {
-        WebSocketResourceDispatcher.dispatchOnIdleTimeout(connectionInfo);
+        WebSocketResourceDispatcher.dispatchOnIdleTimeout(connectionInfo, false);
     }
 
     @Override

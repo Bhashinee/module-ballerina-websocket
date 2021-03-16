@@ -48,7 +48,7 @@ public class WebSocketObservabilityUtil {
         WebSocketMetricsUtil.reportConnectionMetrics(observerContext);
 
         LOGGER.debug("WebSocket new connection established. connectionID: {}, service/url: {}",
-                     observerContext.getConnectionId(), observerContext.getServicePathOrClientUrl());
+                observerContext.getConnectionId(), observerContext.getServicePathOrClientUrl());
     }
 
     /**
@@ -62,7 +62,7 @@ public class WebSocketObservabilityUtil {
         WebSocketMetricsUtil.reportSendMetrics(observerContext, type);
 
         LOGGER.debug("WebSocket message sent. connectionID: {}, service/url: {}, type: {}",
-                     observerContext.getConnectionId(), observerContext.getServicePathOrClientUrl(), type);
+                observerContext.getConnectionId(), observerContext.getServicePathOrClientUrl(), type);
     }
 
     /**
@@ -76,7 +76,7 @@ public class WebSocketObservabilityUtil {
         WebSocketMetricsUtil.reportReceivedMetrics(observerContext, type);
 
         LOGGER.debug("WebSocket message received. connectionID: {}, service/url: {}, type:{}",
-                     observerContext.getConnectionId(), observerContext.getServicePathOrClientUrl(), type);
+                observerContext.getConnectionId(), observerContext.getServicePathOrClientUrl(), type);
     }
 
     /**
@@ -89,7 +89,7 @@ public class WebSocketObservabilityUtil {
         WebSocketMetricsUtil.reportCloseMetrics(observerContext);
 
         LOGGER.debug("WebSocket connection closed. connectionID: {}, service/url: {}",
-                     observerContext.getConnectionId(), observerContext.getServicePathOrClientUrl());
+                observerContext.getConnectionId(), observerContext.getServicePathOrClientUrl());
     }
 
     /**
@@ -101,7 +101,7 @@ public class WebSocketObservabilityUtil {
      * @param errorMessage   error message.
      */
     public static void observeError(WebSocketConnectionInfo connectionInfo, String errorType,
-                                    String errorMessage) {
+            String errorMessage) {
         observeError(connectionInfo, errorType, null, errorMessage);
     }
 
@@ -115,7 +115,7 @@ public class WebSocketObservabilityUtil {
      * @param errorMessage   error message.
      */
     public static void observeError(WebSocketConnectionInfo connectionInfo, String errorType,
-                                    String messageType, String errorMessage) {
+            String messageType, String errorMessage) {
         WebSocketObserverContext observerContext = new WebSocketObserverContext(connectionInfo);
         WebSocketMetricsUtil.reportErrorMetrics(observerContext, errorType, messageType);
 
@@ -125,12 +125,12 @@ public class WebSocketObservabilityUtil {
 
         if (messageType == null) {
             LOGGER.debug("WebSocket type:{}, message: {}, connectionId: {}, service/url: {}",
-                         errorType, errorMessage, observerContext.getConnectionId(),
-                         observerContext.getServicePathOrClientUrl());
+                    errorType, errorMessage, observerContext.getConnectionId(),
+                    observerContext.getServicePathOrClientUrl());
         } else {
             LOGGER.debug("WebSocket type:{}/{}, message: {}, connectionId: {}, service/url: {}",
-                         errorType, messageType, errorMessage, observerContext.getConnectionId(),
-                         observerContext.getServicePathOrClientUrl());
+                    errorType, messageType, errorMessage, observerContext.getConnectionId(),
+                    observerContext.getServicePathOrClientUrl());
         }
     }
 
@@ -157,7 +157,7 @@ public class WebSocketObservabilityUtil {
      * @param resource  name of the resource invoked.
      */
     public static void observeResourceInvocation(Environment environment, WebSocketConnectionInfo connectionInfo,
-                                                 String resource) {
+            String resource) {
         WebSocketTracingUtil.traceResourceInvocation(environment, connectionInfo);
         observeResourceInvocation(connectionInfo, resource);
     }
@@ -173,9 +173,9 @@ public class WebSocketObservabilityUtil {
         WebSocketMetricsUtil.reportResourceInvocationMetrics(observerContext, resource);
 
         LOGGER.debug("WebSocket resource invoked. connectionID: {}, service/url: {}, resource: {}",
-                     observerContext.getConnectionId(),
-                     observerContext.getServicePathOrClientUrl(),
-                     resource);
+                observerContext.getConnectionId(),
+                observerContext.getServicePathOrClientUrl(),
+                resource);
     }
 
     /**

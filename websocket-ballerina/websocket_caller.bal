@@ -1,4 +1,4 @@
-// Copyright (c) 202 0WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+// Copyright (c) 2020 WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
 //
 // WSO2 Inc. licenses this file to you under the Apache License,
 // Version 2.0 (the "License"); you may not use this file except
@@ -14,16 +14,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/io;
-
 # Represents a WebSocket caller.
-public client class WebSocketCaller {
+public client class Caller {
 
     private string id = "";
     private string? negotiatedSubProtocol = ();
     private boolean secure = false;
     private boolean open = false;
     private map<any> attributes = {};
+    private boolean initializedByService = false;
 
     private WebSocketConnector conn = new;
 
@@ -34,29 +33,26 @@ public client class WebSocketCaller {
     # Pushes text to the connection. If an error occurs while sending the text message to the connection, that message
     # will be lost.
     #
-    # + data - Data to be sent. If it is a byte[], it is converted to a UTF-8 string for sending
-    # + finalFrame - Set to `true` if this is a final frame of a (long) message
+    # + data - Data to be sent.
     # + return  - An `error` if an error occurs when sending
-    public remote isolated function pushText(string|json|xml|boolean|int|float|byte|byte[] data,
-        boolean finalFrame = true) returns WebSocketError? {
-        return self.conn.pushText(data, finalFrame);
+    remote isolated function writeTextMessage(string data) returns Error? {
+        return self.conn.writeTextMessage(data);
     }
 
     # Pushes binary data to the connection. If an error occurs while sending the binary message to the connection,
     # that message will be lost.
     #
     # + data - Binary data to be sent
-    # + finalFrame - Set to `true` if this is a final frame of a (long) message
     # + return  - An `error` if an error occurs when sending
-    public remote isolated function pushBinary(byte[] data, boolean finalFrame = true) returns WebSocketError? {
-        return self.conn.pushBinary(data, finalFrame);
+    remote isolated function writeBinaryMessage(byte[] data) returns Error? {
+        return self.conn.writeBinaryMessage(data);
     }
 
     # Pings the connection. If an error occurs while sending the ping frame to the server, that frame will be lost.
     #
     # + data - Binary data to be sent
     # + return  - An `error` if an error occurs when sending
-    public remote isolated function ping(byte[] data) returns WebSocketError? {
+    remote isolated function ping(byte[] data) returns Error? {
         return self.conn.ping(data);
     }
 
@@ -65,7 +61,7 @@ public client class WebSocketCaller {
     #
     # + data - Binary data to be sent
     # + return  - An `error` if an error occurs when sending
-    public remote isolated function pong(byte[] data) returns WebSocketError? {
+    remote isolated function pong(byte[] data) returns Error? {
         return self.conn.pong(data);
     }
 
@@ -73,16 +69,15 @@ public client class WebSocketCaller {
     #
     # + statusCode - Status code for closing the connection
     # + reason - Reason for closing the connection
-    # + timeoutInSeconds - Time to wait for the close frame to be received from the remote endpoint before closing the
+    # + timeout - Time to wait (in seconds) for the close frame to be received from the remote endpoint before closing the
     #                   connection. If the timeout exceeds, then the connection is terminated even though a close frame
     #                   is not received from the remote endpoint. If the value < 0 (e.g., -1), then the connection waits
     #                   until a close frame is received. If WebSocket frame is received from the remote endpoint
     #                   within the waiting period, the connection is terminated immediately.
     # + return - An `error` if an error occurs when sending
-    public remote isolated function close(int? statusCode = 1000, string? reason = (),
-        int timeoutInSeconds = 60) returns WebSocketError? {
-        io:println("Close called in caller");
-        return self.conn.close(statusCode, reason, timeoutInSeconds);
+    remote isolated function close(int? statusCode = 1000, string? reason = (),
+        decimal timeout = 60) returns Error? {
+        return self.conn.close(statusCode, reason, timeout);
     }
 
     # Sets a connection related attribute.

@@ -19,7 +19,7 @@
 package org.ballerinalang.net.websocket;
 
 import io.ballerina.runtime.api.Runtime;
-import io.ballerina.runtime.api.types.AttachedFunctionType;
+import io.ballerina.runtime.api.types.MethodType;
 import io.ballerina.runtime.api.values.BObject;
 
 import java.util.Map;
@@ -32,7 +32,8 @@ public class WebSocketService {
 
     protected final BObject service;
     protected Runtime runtime;
-    private final Map<String, AttachedFunctionType> resourcesMap = new ConcurrentHashMap<>();
+    private final Map<String, MethodType> resourcesMap = new ConcurrentHashMap<>();
+    private Map<String, Object> wsServices = new ConcurrentHashMap<>();
 
     public WebSocketService(Runtime runtime) {
         this.runtime = runtime;
@@ -46,12 +47,12 @@ public class WebSocketService {
     }
 
     private void populateResourcesMap(BObject service) {
-        for (AttachedFunctionType resource : service.getType().getAttachedFunctions()) {
+        for (MethodType resource : service.getType().getMethods()) {
             resourcesMap.put(resource.getName(), resource);
         }
     }
 
-    public AttachedFunctionType getResourceByName(String resourceName) {
+    public MethodType getResourceByName(String resourceName) {
         return resourcesMap.get(resourceName);
     }
 
@@ -61,5 +62,13 @@ public class WebSocketService {
 
     public Runtime getRuntime() {
         return runtime;
+    }
+
+    public void addWsService(String channelId, Object dispatchingService) {
+        this.wsServices.put(channelId, dispatchingService);
+    }
+
+    public Object getWsService(String key) {
+        return this.wsServices.get(key);
     }
 }
