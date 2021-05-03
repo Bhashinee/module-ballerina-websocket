@@ -1,7 +1,7 @@
 Ballerina Websocket Library
 ===================
 
-  [![Build](https://github.com/ballerina-platform/module-ballerina-websocket/workflows/Build/badge.svg)](https://github.com/ballerina-platform/module-ballerina-websocket/actions?query=workflow%3ABuild)
+  [![Build](https://github.com/ballerina-platform/module-ballerina-websocket/actions/workflows/build-timestamped-master.yml/badge.svg)](https://github.com/ballerina-platform/module-ballerina-websocket/actions/workflows/build-timestamped-master.yml)
   [![GitHub Last Commit](https://img.shields.io/github/last-commit/ballerina-platform/module-ballerina-websocket.svg)](https://github.com/ballerina-platform/module-ballerina-websocket/commits/master)
     [![Github issues](https://img.shields.io/github/issues/ballerina-platform/ballerina-standard-library/module/websocket.svg?label=Open%20Issues)](https://github.com/ballerina-platform/ballerina-standard-library/labels/module%2Fwebsocket)
   [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -37,22 +37,44 @@ This repository only contains the source code for the module.
 
 Execute the commands below to build from source.
 
-1. To build the library:
-        
-        ./gradlew clean build
+1. To build the package:
+   ```    
+   ./gradlew clean build
+   ```
+2. To run the tests:
+   ```
+   ./gradlew clean test
+   ```
+   
+3. To run a group of tests
+   ```
+   ./gradlew clean test -Pgroups=<test_group_names>
+   ```
+   
+4. To build the without the tests:
+   ```
+   ./gradlew clean build -x test
+   ```
+   
+5. To debug package implementation:
+   ```
+   ./gradlew clean build -Pdebug=<port>
+   ```
+   
+6. To debug with Ballerina language:
+   ```
+   ./gradlew clean build -PbalJavaDebug=<port>
+   ```
 
-2. To run the integration tests:
-
-        ./gradlew clean test
-
-3. To build the module without the tests:
-
-        ./gradlew clean build -x test
-
-4. To debug the tests:
-
-        ./gradlew clean test -Pdebug=<port>
-
+7. Publish the generated artifacts to the local Ballerina central repository:
+    ```
+    ./gradlew clean build -PpublishToLocalCentral=true
+    ```
+8. Publish the generated artifacts to the Ballerina central repository:
+   ```
+   ./gradlew clean build -PpublishToCentral=true
+   ```
+   
 ## Contributing to Ballerina
 
 As an open source project, Ballerina welcomes contributions from the community. 

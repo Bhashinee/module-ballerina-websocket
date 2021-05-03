@@ -23,7 +23,7 @@ string errMessage = "";
 ClientConfiguration config = {subProtocols: ["xml"]};
 
 service class errorResourceService {
-   remote function onError(Caller clientCaller, error err) {
+   remote function onError(Caller clientCaller, Error err) {
        errMessage = <@untainted>err.message();
    }
 }
@@ -75,7 +75,7 @@ service class ErrorServer {
 }
 
 // Connection refused IO error.
-@test:Config {}
+@test:Config {enable:false}
 public function testConnectionError() returns Error? {
    Error|Client wsClient = new ("ws://lmnop.ls", config = config);
    if (wsClient is Error) {
