@@ -1,0 +1,30 @@
+[package]
+org = "ballerina"
+name = "websocket_tests"
+version = "1.0.2"
+
+[[dependency]]
+org = "ballerina"
+name = "io"
+version = "0.5.2"
+
+#[[dependency]]
+#org = "ballerina"
+#name = "auth"
+#version = "@stdlib.auth.version@"
+
+[[dependency]]
+org = "ballerina"
+name = "runtime"
+version = "0.5.2"
+
+[[dependency]]
+org = "ballerina"
+name = "http"
+version = "1.0.2"
+
+[[platform.java11.dependency]]
+path = "../websocket-native/build/libs/websocket-native-1.0.2-SNAPSHOT.jar"
+groupId = "ballerina"
+artifactId = "websocket"
+version = "1.0.2-SNAPSHOT"
